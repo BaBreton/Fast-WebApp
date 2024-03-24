@@ -1,0 +1,48 @@
+version: '3.8'
+
+volumes:
+  db-data: {}
+
+networks:
+  default:
+    driver: bridge
+
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: ./back/
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "${API_PORT}:3000"
+    depends_on:
+      - db
+    container_name: api
+    networks:
+      - default
+    restart: always
+
+  front:
+    build:
+      context: ./front/
+      dockerfile: Dockerfile
+    ports:
+      - "${VITE_FRONT_PORT}:80"
+    container_name: front
+    env_file:
+      - .env
+    networks:
+      - default
+    restart: always
